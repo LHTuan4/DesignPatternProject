@@ -21,6 +21,8 @@ public class test {
     @COLUMN(name="Diem")
     public int diem;
     
+    public int test=20;
+    
    
     @Override
     public String toString() {

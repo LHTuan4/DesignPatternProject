@@ -20,10 +20,10 @@ public class FinalProject {
      */
     public static void main(String[] args) {
         // TODO code application logic here
-            test t = new test("1aaaDoDangTrinh","ABCZXZ",10);
+            test t = new test("Luong qaTuan HAHasdA","Bao Loc",10);
             mySQLAdapter a = new mySQLAdapter();
             a.createConnection("localhost:3306/Employee", "root", "123456");
-            a.update(t);       
+            a.insert(t);       
     }
     
 }
