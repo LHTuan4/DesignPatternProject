@@ -17,7 +17,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
  //can use in method only.
 public @interface TABLE {
-     String name() default "Mkyong";
+     String name() default "MyName";
 }
 
 

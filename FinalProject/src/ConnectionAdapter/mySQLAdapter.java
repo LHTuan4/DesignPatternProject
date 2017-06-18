@@ -18,6 +18,7 @@ import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import myAnnotation.COLUMN;
+import myAnnotation.KEY;
 import myAnnotation.TABLE;
 
 /**
@@ -111,52 +112,69 @@ public class mySQLAdapter implements ConnectionInterface {
 
     @Override
     public boolean update(Object values) {
-        //Get colums 
-        Class aClass = values.getClass();
-        String columnsName = "";
-        Field[] fields = aClass.getFields();
-        for (int i = 0; i < fields.length; i++) {
-            if (fields[i].isAnnotationPresent(COLUMN.class)) {
-                COLUMN column = fields[i].getAnnotation(COLUMN.class);
-                if (column != null) {
-                    System.out.println(column.name());
-                }
-                columnsName += column.name() + ",";
-
-                System.out.println(fields[i].getType());
-                try {
-                    System.out.println(fields[i].get(values));
-                } catch (IllegalArgumentException ex) {
-                    Logger.getLogger(mySQLAdapter.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (IllegalAccessException ex) {
-                    Logger.getLogger(mySQLAdapter.class.getName()).log(Level.SEVERE, null, ex);
-                }
-
-            }
-        }
-
-        columnsName = columnsName.substring(0, columnsName.length() - 1);
-        
-        // Get table name
-        
+        // Get table name    
         Class obj = values.getClass();
         if (obj.isAnnotationPresent(TABLE.class)) {
             Annotation annotation = obj.getAnnotation(TABLE.class);
             TABLE table = (TABLE) annotation;
-            System.out.println(table.name());
-        
-        PreparedStatement preparedStatement = null;
-
-		String updateTableSQL = "UPDATE DBUSER SET USERNAME = ? "
-				                  + " WHERE USER_ID = ?";
+            System.out.println("Name of the table: " + table.name());
 
 
-        System.out.println(columnsName);
+            String query = "UPDATE " + table.name() + " SET ";
+            //Get colums        
+            Class columns = values.getClass();      
+            Field[] fields = columns.getFields();
 
-       
+            
+            for (int i = 0; i < fields.length; i++) {
+                if (fields[i].isAnnotationPresent(COLUMN.class)) {
+                    COLUMN column = fields[i].getAnnotation(COLUMN.class);
+                    if (column != null) {
+                        System.out.println(column.name());
+                    }
+                    query += column.name() + " = ";
+
+                    //System.out.println(fields[i].getType());
+                    try {
+                        System.out.println(fields[i].get(values));
+                        query += fields[i].get(values).toString() + ", ";
+                    } catch (IllegalArgumentException ex) {
+                        Logger.getLogger(mySQLAdapter.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (IllegalAccessException ex) {
+                        Logger.getLogger(mySQLAdapter.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+
+                }
+            }
+
+            query = query.substring(0, query.length() - 2);
+
+            //Get keys
+            for (Field f: values.getClass().getFields()) {
+                KEY key = f.getAnnotation(KEY.class);
+                if (key != null)
+                    try {
+                        query += " WHERE " + f.getName() + " = " + f.get(values).toString();
+                } catch (IllegalAccessException ex) {
+                    Logger.getLogger(mySQLAdapter.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            System.out.println(query);
+
+            PreparedStatement preparedStatement = null;
+            try {
+                preparedStatement = connection.prepareStatement(query);
+            } catch (SQLException ex) {
+                Logger.getLogger(mySQLAdapter.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            
+            try {
+                preparedStatement.execute();
+            } catch (SQLException ex) {
+                Logger.getLogger(mySQLAdapter.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    return true;
     }
-         return true;
-    }
-
 }
 

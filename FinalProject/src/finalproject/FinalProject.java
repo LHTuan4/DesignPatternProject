@@ -23,7 +23,7 @@ public class FinalProject {
             test t = new test("Luong qaTuan HAHasdA","Bao Loc",10);
             mySQLAdapter a = new mySQLAdapter();
             a.createConnection("localhost:3306/Employee", "root", "123456");
-            a.insert(t);       
+            a.update(t);       
     }
     
 }

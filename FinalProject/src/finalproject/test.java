@@ -6,6 +6,7 @@
 package finalproject;
 
 import myAnnotation.COLUMN;
+import myAnnotation.KEY;
 import myAnnotation.TABLE;
 
 /**
@@ -14,7 +15,9 @@ import myAnnotation.TABLE;
  */
 @TABLE(name="TEST")
 public class test {
+    
     @COLUMN(name="Ten")
+    @KEY
     public String name;
     @COLUMN(name="DiaChi")
     public String diachi;
