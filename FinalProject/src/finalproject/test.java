@@ -13,9 +13,9 @@ import myAnnotation.TABLE;
  *
  * @author DangTrinh
  */
+
 @TABLE(name="TEST")
 public class test {
-    
     @COLUMN(name="Ten")
     @KEY
     public String name;

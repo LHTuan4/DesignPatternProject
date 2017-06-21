@@ -5,12 +5,18 @@
  */
 package ConnectionAdapter;
 
+import Criteria.Criteria;
+import Criteria.CriteriaBuilder;
+import java.sql.SQLException;
+
 /**
  *
  * @author DangTrinh
  */
 public interface ConnectionInterface {
     public abstract boolean createConnection(String url, String user, String password);
-    public abstract boolean insert(Object values);
-    public abstract boolean update(Object values);
+    public abstract boolean insert(Object values) throws IllegalArgumentException, IllegalAccessException, SQLException;
+    public abstract boolean update(Object values) throws IllegalArgumentException, IllegalAccessException, SQLException;
+    public abstract boolean delete(Object values) throws IllegalArgumentException, IllegalAccessException, SQLException;
+    public abstract boolean select(Criteria crit);
 }

@@ -5,18 +5,18 @@
  */
 package ConnectionAdapter;
 
-import finalproject.test;
+import Criteria.Criteria;
 import java.lang.annotation.Annotation;
-import static java.lang.annotation.RetentionPolicy.values;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import myAnnotation.COLUMN;
 import myAnnotation.KEY;
 import myAnnotation.TABLE;
@@ -48,7 +48,7 @@ public class mySQLAdapter implements ConnectionInterface {
     }
 
     @Override
-    public boolean insert(Object values) {
+    public boolean insert(Object values) throws IllegalArgumentException, IllegalAccessException, SQLException {
         Class obj = values.getClass();
         if (obj.isAnnotationPresent(TABLE.class)) {
             Annotation annotation = obj.getAnnotation(TABLE.class);
@@ -63,7 +63,7 @@ public class mySQLAdapter implements ConnectionInterface {
                 if (fields[i].isAnnotationPresent(COLUMN.class)) {
                     COLUMN column = fields[i].getAnnotation(COLUMN.class);
                     if (column != null) {
-                        
+
                         columnsName += column.name() + ",";
                         System.out.println(column.name());
                     }
@@ -72,36 +72,25 @@ public class mySQLAdapter implements ConnectionInterface {
                 }
             }
             columnsName = columnsName.substring(0, columnsName.length() - 1);
-              System.out.print(columnsName);
+            System.out.print(columnsName);
 
             String query = " insert into " + table.name() + " (" + columnsName + ")"
                     + " values (?, ?, ?)";
 
             // create the mysql insert preparedstatement
             PreparedStatement preparedStmt = null;
-            try {
-                preparedStmt = connection.prepareStatement(query);
 
-                for (int i = 0; i < fields.length; i++) {
-                    if (fields[i].isAnnotationPresent(COLUMN.class)) {
-                        preparedStmt.setObject(i+1, fields[i].get(values));
-                    }
+            preparedStmt = connection.prepareStatement(query);
+
+            for (int i = 0; i < fields.length; i++) {
+                if (fields[i].isAnnotationPresent(COLUMN.class)) {
+
+                    preparedStmt.setObject(i + 1, fields[i].get(values));
+
                 }
-
-            } catch (SQLException ex) {
-                Logger.getLogger(mySQLAdapter.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (IllegalArgumentException ex) {
-                Logger.getLogger(mySQLAdapter.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (IllegalAccessException ex) {
-                Logger.getLogger(mySQLAdapter.class.getName()).log(Level.SEVERE, null, ex);
             }
 
-            try {
-                // execute the preparedstatement
-                preparedStmt.execute();
-            } catch (SQLException ex) {
-                Logger.getLogger(mySQLAdapter.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            preparedStmt.execute();
 
         } else {
             System.out.print("ABC");
@@ -110,8 +99,9 @@ public class mySQLAdapter implements ConnectionInterface {
 
     }
 
+    //update by KEY of table.
     @Override
-    public boolean update(Object values) {
+    public boolean update(Object values) throws IllegalArgumentException, IllegalAccessException, SQLException {
         // Get table name    
         Class obj = values.getClass();
         if (obj.isAnnotationPresent(TABLE.class)) {
@@ -119,62 +109,141 @@ public class mySQLAdapter implements ConnectionInterface {
             TABLE table = (TABLE) annotation;
             System.out.println("Name of the table: " + table.name());
 
-
             String query = "UPDATE " + table.name() + " SET ";
             //Get colums        
-            Class columns = values.getClass();      
+            Class columns = values.getClass();
             Field[] fields = columns.getFields();
 
-            
             for (int i = 0; i < fields.length; i++) {
                 if (fields[i].isAnnotationPresent(COLUMN.class)) {
                     COLUMN column = fields[i].getAnnotation(COLUMN.class);
                     if (column != null) {
                         System.out.println(column.name());
                     }
-                    query += column.name() + " = ";
+                    query += column.name() + " = ?,";
 
                     //System.out.println(fields[i].getType());
-                    try {
-                        System.out.println(fields[i].get(values));
-                        query += fields[i].get(values).toString() + ", ";
-                    } catch (IllegalArgumentException ex) {
-                        Logger.getLogger(mySQLAdapter.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (IllegalAccessException ex) {
-                        Logger.getLogger(mySQLAdapter.class.getName()).log(Level.SEVERE, null, ex);
-                    }
+                    System.out.println(fields[i].get(values));
 
                 }
             }
 
-            query = query.substring(0, query.length() - 2);
+            query = query.substring(0, query.length() - 1);
 
             //Get keys
-            for (Field f: values.getClass().getFields()) {
+            for (Field f : values.getClass().getFields()) {
                 KEY key = f.getAnnotation(KEY.class);
-                if (key != null)
-                    try {
-                        query += " WHERE " + f.getName() + " = " + f.get(values).toString();
-                } catch (IllegalAccessException ex) {
-                    Logger.getLogger(mySQLAdapter.class.getName()).log(Level.SEVERE, null, ex);
+                if (key != null) {
+                    COLUMN column = f.getAnnotation(COLUMN.class);
+                    if (column != null) {
+                        System.out.println(column.name());
+                    }
+
+                    query += " WHERE " + column.name() + " = ? ";
                 }
             }
             System.out.println(query);
 
-            PreparedStatement preparedStatement = null;
-            try {
-                preparedStatement = connection.prepareStatement(query);
-            } catch (SQLException ex) {
-                Logger.getLogger(mySQLAdapter.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            
-            try {
-                preparedStatement.execute();
-            } catch (SQLException ex) {
-                Logger.getLogger(mySQLAdapter.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-    return true;
-    }
-}
+            PreparedStatement preparedStmt = null;
 
+            preparedStmt = connection.prepareStatement(query);
+            int count = 0;
+
+            for (int i = 0; i < fields.length; i++) {
+                if (fields[i].isAnnotationPresent(COLUMN.class)) {
+                    preparedStmt.setObject(i + 1, fields[i].get(values));
+                    count++;
+                }
+            }
+            System.out.println(count);
+            for (int i = 0; i < fields.length; i++) {
+                if (fields[i].isAnnotationPresent(KEY.class)) {
+                    preparedStmt.setObject(count + 1, fields[i].get(values));
+
+                }
+            }
+            preparedStmt.execute();
+            return true;
+
+        }
+        return false;
+    }
+
+    @Override
+    public boolean delete(Object values) throws IllegalArgumentException, IllegalAccessException, SQLException {
+
+        Class obj = values.getClass();
+        if (obj.isAnnotationPresent(TABLE.class)) {
+            Annotation annotation = obj.getAnnotation(TABLE.class);
+            TABLE table = (TABLE) annotation;
+            System.out.println(table.name());
+            String columnsName = "";
+            String query = "DELETE FROM " + table.name();
+
+            PreparedStatement preparedStmt = null;
+
+            for (Field f : values.getClass().getFields()) {
+                KEY key = f.getAnnotation(KEY.class);
+                if (key != null) {
+                    COLUMN column = f.getAnnotation(COLUMN.class);
+                    if (column != null) {
+                        System.out.println(column.name());
+                    }
+
+                    query += " WHERE " + column.name() + " = ? ";
+                    preparedStmt = connection.prepareStatement(query);
+
+                    System.out.println(query + " " + f.get(values));
+                    preparedStmt.setObject(1, f.get(values));
+
+                    System.out.println(query);
+                    preparedStmt.execute();
+                }
+            }
+
+        }
+        return false;
+    }
+
+    public boolean select(Criteria crit) {
+        Class obj = crit.getTargetTable().getClass();
+        if (obj.isAnnotationPresent(TABLE.class)) {
+            try {
+                Annotation annotation = obj.getAnnotation(TABLE.class);
+                TABLE table = (TABLE) annotation;
+                System.out.println(table.name());
+                String query = "SELECT * FROM " + table.name() + " WHERE " + crit.getQuery();
+                System.out.println(query);
+                Statement stmt = null;
+
+                try {
+                    stmt = connection.createStatement();
+                } catch (SQLException ex) {
+                    Logger.getLogger(mySQLAdapter.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+                ResultSet rs = stmt.executeQuery(query);
+                while (rs.next()) {
+                    //Retrieve by column name
+                    String ten = rs.getString(1);
+                    String daichi = rs.getString(2);
+                    int diem = rs.getInt(3);
+                    
+
+                    //Display values
+                    System.out.print("Ten: " + ten);
+                    System.out.print(", Diachi: " + daichi);
+                    System.out.print(", diem: " + diem);
+                   
+                }
+                rs.close();
+
+            } catch (SQLException ex) {
+                Logger.getLogger(mySQLAdapter.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+        }
+        return true;
+    }
+
+}
