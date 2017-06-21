@@ -38,7 +38,7 @@ public class FinalProject {
             CriteriaBuilder c = new CriteriaBuilder(t);
             Comparison ax = new GreaterThan();
             Comparison ax1 = new LessThan();
-            c.GreaterThan("diem", ax, 5).LessThan("diem", ax1, 8);      
+            c.GreaterThan("diem", ax, 5).LessThan("diem", ax1, 8).GroupBy("name").GroupBy("diachi");
             a.select(c);  
              
             

@@ -81,4 +81,23 @@ public class CriteriaBuilder implements Criteria {
         return criteria;
     }
 
+    @Override
+    public Criteria GroupBy(String field) {
+        if (criteria.toString().contains("GROUP BY")) criteria.append(", ");
+        else criteria.append("\nGROUP BY ");
+        Class<?> someClass = targetTable.getClass();
+        COLUMN column;
+        Field someField;
+        try {
+            someField = someClass.getField(field);
+            column= someField.getAnnotation(COLUMN.class);
+            criteria.append(column.name());
+        } catch (NoSuchFieldException ex) {
+            Logger.getLogger(CriteriaBuilder.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SecurityException ex) {
+            Logger.getLogger(CriteriaBuilder.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return this;
+    }
+
 }

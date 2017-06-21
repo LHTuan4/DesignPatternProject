@@ -17,6 +17,7 @@ public interface Criteria<T> {
     public Criteria LessThan(String field, Comparison comparier, T value);
     public abstract T getTargetTable();
     public abstract StringBuilder getQuery();
+    public Criteria GroupBy(String field);
    
     
 }
